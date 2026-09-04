@@ -20,15 +20,28 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
-// --- Sol & Skybox (exercice 1) ---
+// --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
-textureLoader.load('textures/skybox.png', (texture) => {
-  texture.mapping = THREE.EquirectangularReflectionMapping;
-  scene.background = texture;
-  scene.environment = texture;
-});
+textureLoader.load(
+  'textures/skybox.png',
+  (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.background = texture;
+    scene.environment = texture;
+  },
+  undefined,
+  (err) => console.error('Erreur chargement skybox.png :', err)
+);
 
-const grassTexture = textureLoader.load('textures/grass.png');
+const grassTexture = textureLoader.load(
+  'textures/grass.png',
+  (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+  },
+  undefined,
+  (err) => console.error('Erreur chargement grass.png :', err)
+);
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 grassTexture.repeat.set(20, 20);
@@ -40,7 +53,7 @@ const ground = new THREE.Mesh(
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-// --- Joueur (exercice 2) ---
+// --- Joueur (Exercice 2) ---
 const cubeSize = 2;
 const playerGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.4 });
