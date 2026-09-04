@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import skyboxUrl from './textures/skybox.png';
+import grassUrl from './textures/grass.png';
 
 
 // --- Scène, Caméra & Rendu ---
@@ -25,7 +27,7 @@ scene.add(dirLight);
 // --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load(
-  '/textures/skybox.png',
+  skyboxUrl,
   (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -37,7 +39,7 @@ textureLoader.load(
 );
 
 const grassTexture = textureLoader.load(
-  '/textures/grass.png',
+  grassUrl,
   (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
   },
