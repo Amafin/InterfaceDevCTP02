@@ -22,13 +22,13 @@ scene.add(dirLight);
 
 // --- Sol & Skybox (exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
-textureLoader.load('textures/skybox.jpg', (texture) => {
+textureLoader.load('textures/skybox.png', (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = texture;
   scene.environment = texture;
 });
 
-const grassTexture = textureLoader.load('textures/grass.jpg');
+const grassTexture = textureLoader.load('textures/grass.png');
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 grassTexture.repeat.set(20, 20);
