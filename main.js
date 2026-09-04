@@ -187,15 +187,14 @@ function animate() {
   }
 
   // --- Suivi automatique de la caméra (Exercice 3) ---
-  // Calcul du vecteur de déplacement subi par le joueur sur cette frame
-  const playerMovement = player.position.clone().sub(previousPlayerPos);
-  
-  // Translation de la caméra pour maintenir la distance exacte
-  camera.position.add(playerMovement);
-  
-  // Recentre la cible d'orbite sur le centre du cube
-  controls.target.copy(player.position);
+  // 1. Calcul du déplacement réel effectué par le cube
+  const deltaMove = new THREE.Vector3().subVectors(player.position, previousPlayerPos);
 
+  // 2. Déplacement simultané de la cible ET de la caméra
+  controls.target.add(deltaMove);
+  camera.position.add(deltaMove);
+
+  // 3. Application du suivi
   controls.update();
   renderer.render(scene, camera);
 }
