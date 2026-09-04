@@ -2,22 +2,43 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>CTP02</title>
+  <title>Projet 3D - Menu des Exercices</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-  </style>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #1e1e24;
+      font-family: Arial, sans-serif;
+      color: #fff;
     }
-  </script>
+    h1 { margin-bottom: 2rem; }
+    .btn-container { display: flex; gap: 20px; }
+    .btn {
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      background: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+    }
+    .btn-alt { background: #e74c3c; }
+    .btn-alt:hover { background: #c0392b; }
+  </style>
 </head>
 <body>
-  <script type="module" src="main.js"></script>
+  <h1>Projet Développement 3D</h1>
+  <div class="btn-container">
+    <a class="btn" href="./ex1-4.html">Exercices 1 à 4 (Three.js)</a>
+    <a class="btn btn-alt" href="./ex5.html">Exercice 5 & 6 (A-Frame Physics)</a>
+  </div>
 </body>
 </html>
