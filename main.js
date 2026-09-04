@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// --- Imports des assets gérés par Vite ---
 import skyboxUrl from './textures/skybox.png';
 import grassUrl from './textures/grass.png';
-
 
 // --- Scène, Caméra & Rendu ---
 const scene = new THREE.Scene();
@@ -22,7 +23,6 @@ scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
-
 
 // --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
@@ -56,7 +56,6 @@ const ground = new THREE.Mesh(
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
-
 
 // --- Joueur (Exercice 2) ---
 const cubeSize = 2;
@@ -166,8 +165,6 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
 }
-
-
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
