@@ -1,10 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// --- Imports des assets gérés par Vite ---
-import skyboxUrl from './textures/skybox.png';
-import grassUrl from './textures/grass.png';
-
 // --- Scène, Caméra & Rendu ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -25,36 +21,54 @@ dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
 // --- Sol & Skybox (Exercice 1) ---
-const textureLoader = new THREE.TextureLoader();
 
-// Résolution absolue et dynamique des URLs par le navigateur
-const skyboxUrl = new URL('./textures/skybox.png', import.meta.url).href;
-const grassUrl = new URL('./textures/grass.png', import.meta.url).href;
+// 1. Skybox panoramique équirectangulaire généré par Canvas
+const skyCanvas = document.createElement('canvas');
+skyCanvas.width = 1024;
+skyCanvas.height = 512;
+const skyCtx = skyCanvas.getContext('2d');
 
-textureLoader.load(
-  skyboxUrl,
-  (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.background = texture;
-    scene.environment = texture;
-  },
-  undefined,
-  (err) => console.error('Erreur chargement skybox.png :', err)
-);
+// Dégradé vertical pour simuler le ciel et l'horizon
+const skyGradient = skyCtx.createLinearGradient(0, 0, 0, 512);
+skyGradient.addColorStop(0.0, '#1e528e'); // Zénith bleu profond
+skyGradient.addColorStop(0.5, '#7ca9d6'); // Ciel dégagé
+skyGradient.addColorStop(0.7, '#dceaf7'); // Horizon lumineux
+skyGradient.addColorStop(1.0, '#4a6042'); // Terre / horizon lointain
+skyCtx.fillStyle = skyGradient;
+skyCtx.fillRect(0, 0, 1024, 512);
 
-const grassTexture = textureLoader.load(
-  grassUrl,
-  (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-  },
-  undefined,
-  (err) => console.error('Erreur chargement grass.png :', err)
-);
+const skyTexture = new THREE.CanvasTexture(skyCanvas);
+skyTexture.colorSpace = THREE.SRGBColorSpace;
+skyTexture.mapping = THREE.EquirectangularReflectionMapping;
+scene.background = skyTexture;
+scene.environment = skyTexture;
+
+// 2. Texture d'herbe procédurale avec motif et variations
+const grassCanvas = document.createElement('canvas');
+grassCanvas.width = 256;
+grassCanvas.height = 256;
+const grassCtx = grassCanvas.getContext('2d');
+
+// Fond vert herbe
+grassCtx.fillStyle = '#3a7d32';
+grassCtx.fillRect(0, 0, 256, 256);
+
+// Taches d'herbe variées (teintes claires et sombres)
+for (let i = 0; i < 2000; i++) {
+  const x = Math.random() * 256;
+  const y = Math.random() * 256;
+  const greenVariation = Math.floor(Math.random() * 60) - 30;
+  grassCtx.fillStyle = `rgb(${50 + greenVariation}, ${130 + greenVariation}, ${45 + greenVariation})`;
+  grassCtx.fillRect(x, y, 2, 4);
+}
+
+const grassTexture = new THREE.CanvasTexture(grassCanvas);
+grassTexture.colorSpace = THREE.SRGBColorSpace;
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 grassTexture.repeat.set(20, 20);
 
+// Grand plan horizontal pour le sol
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(100, 100),
   new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.8 })
