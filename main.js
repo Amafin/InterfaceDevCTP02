@@ -136,12 +136,20 @@ function animate() {
   // Mémorisation de la position précédente pour déplacer la caméra d'autant
   const previousPlayerPos = player.position.clone();
 
-  // Direction voulue par l'utilisateur
+  // Direction voulue par l'utilisateur (relative à l'orientation caméra)
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
+  forward.y = 0; // Projection sur le plan horizontal
+  forward.normalize();
+
+  const right = new THREE.Vector3();
+  right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
   const inputDirection = new THREE.Vector3();
-  if (keys.w) inputDirection.z -= 1; // Avancer (vers -Z)
-  if (keys.s) inputDirection.z += 1; // Reculer (vers +Z)
-  if (keys.a) inputDirection.x -= 1; // Gauche (-X)
-  if (keys.d) inputDirection.x += 1; // Droite (+X)
+  if (keys.w) inputDirection.add(forward);         // Avancer vers la caméra
+  if (keys.s) inputDirection.sub(forward);         // Reculer par rapport à la caméra
+  if (keys.d) inputDirection.add(right);           // Droite relative
+  if (keys.a) inputDirection.sub(right);           // Gauche relative
 
   if (inputDirection.lengthSq() > 0) {
     inputDirection.normalize();
@@ -187,14 +195,11 @@ function animate() {
   }
 
   // --- Suivi automatique de la caméra (Exercice 3) ---
-  // 1. Calcul du déplacement réel effectué par le cube
   const deltaMove = new THREE.Vector3().subVectors(player.position, previousPlayerPos);
 
-  // 2. Déplacement simultané de la cible ET de la caméra
   controls.target.add(deltaMove);
   camera.position.add(deltaMove);
 
-  // 3. Application du suivi
   controls.update();
   renderer.render(scene, camera);
 }
