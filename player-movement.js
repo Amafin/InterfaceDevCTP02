@@ -1,4 +1,4 @@
-// --- Suivi de position pour la caméra (évite tout conflit clavier) ---
+// --- Suivi caméra rigide et réactif ---
 AFRAME.registerComponent('camera-rig-follow', {
   schema: {
     target: { type: 'selector' }
@@ -6,15 +6,39 @@ AFRAME.registerComponent('camera-rig-follow', {
   tick: function () {
     if (!this.data.target) return;
     const targetPos = this.data.target.object3D.position;
-    // Le rig se place exactement aux coordonnées du cube
     this.el.object3D.position.set(targetPos.x, targetPos.y, targetPos.z);
   }
 });
 
-// --- Déplacement physique du cube ---
+// --- Configuration des cubes à pousser (Comportement cohérent) ---
+AFRAME.registerComponent('pushable-object', {
+  schema: {
+    mass: { type: 'number', default: 2 }
+  },
+  init: function () {
+    // Initialisation en corps physique dynamique
+    this.el.setAttribute('dynamic-body', {
+      mass: this.data.mass,
+      shape: 'box'
+    });
+
+    this.el.addEventListener('body-loaded', () => {
+      const body = this.el.body;
+      if (!body) return;
+
+      // Amortissements pour éviter qu'ils glissent comme sur de la glace
+      body.linearDamping = 0.3;   // Freinage naturel de translation
+      body.angularDamping = 0.6;  // Évite les rotations et toupies infinies
+      body.material.friction = 0.2;
+      body.material.restitution = 0.05; // Pas de rebond élastique excessif
+    });
+  }
+});
+
+// --- Déplacement du joueur ---
 AFRAME.registerComponent('player-physics-movement', {
   schema: {
-    speed: { type: 'number', default: 8 },
+    speed: { type: 'number', default: 7 },
     jumpForce: { type: 'number', default: 8 }
   },
 
@@ -41,7 +65,7 @@ AFRAME.registerComponent('player-physics-movement', {
       if (key === 'd') this.keys.right = false;
     });
 
-    // Contact sol
+    // Détection contact sol (uniquement impact vertical vers le haut)
     this.el.addEventListener('collide', (e) => {
       const contact = e.detail.contact;
       if (contact) {
@@ -52,7 +76,7 @@ AFRAME.registerComponent('player-physics-movement', {
       }
     });
 
-    // Stabilité physique
+    // Stabilité absolue du joueur
     this.el.addEventListener('body-loaded', () => {
       const body = this.el.body;
       if (!body) return;
@@ -64,7 +88,7 @@ AFRAME.registerComponent('player-physics-movement', {
         body.angularFactor.set(0, 0, 0);
       }
       body.angularDamping = 1.0;
-      body.material.friction = 0.0;
+      body.material.friction = 0.05; // Permet de glisser en poussant
     });
   },
 
@@ -96,7 +120,7 @@ AFRAME.registerComponent('player-physics-movement', {
     body.velocity.x = moveX;
     body.velocity.z = moveZ;
 
-    // Verrouillage rigide du cube
+    // Le cube joueur reste parfaitement droit
     body.angularVelocity.set(0, 0, 0);
     body.quaternion.set(0, 0, 0, 1);
   }
