@@ -27,7 +27,7 @@ scene.add(dirLight);
 // --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load(
-  skyboxUrl,
+  './textures/skybox.png',
   (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -39,7 +39,7 @@ textureLoader.load(
 );
 
 const grassTexture = textureLoader.load(
-  grassUrl,
+  './textures/grass.png',
   (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
   },
