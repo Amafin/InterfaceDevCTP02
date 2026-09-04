@@ -136,26 +136,26 @@ function animate() {
   // Mémorisation de la position précédente pour déplacer la caméra d'autant
   const previousPlayerPos = player.position.clone();
 
-  // Direction voulue par l'utilisateur (relative à l'orientation caméra)
-  const forward = new THREE.Vector3();
-  camera.getWorldDirection(forward);
-  forward.y = 0; // Projection sur le plan horizontal
-  forward.normalize();
-
-  const right = new THREE.Vector3();
-  right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-
+  // 1. Direction brute d'après les touches pressées
   const inputDirection = new THREE.Vector3();
-  if (keys.w) inputDirection.add(forward);         // Avancer vers la caméra
-  if (keys.s) inputDirection.sub(forward);         // Reculer par rapport à la caméra
-  if (keys.d) inputDirection.add(right);           // Droite relative
-  if (keys.a) inputDirection.sub(right);           // Gauche relative
+  if (keys.w) inputDirection.z -= 1; // Avancer
+  if (keys.s) inputDirection.z += 1; // Reculer
+  if (keys.a) inputDirection.x -= 1; // Gauche
+  if (keys.d) inputDirection.x += 1; // Droite
 
   if (inputDirection.lengthSq() > 0) {
     inputDirection.normalize();
-  }
 
-  if (inputDirection.lengthSq() > 0) {
+    // 2. Calcul de l'angle horizontal (azimut) de la caméra par rapport au joueur
+    const angleCam = Math.atan2(
+      camera.position.x - player.position.x,
+      camera.position.z - player.position.z
+    );
+
+    // 3. Rotation de la direction selon la vue de la caméra
+    inputDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), angleCam);
+
+    // Accélération dans la direction orientée
     velocity.x += inputDirection.x * acceleration * delta;
     velocity.z += inputDirection.z * acceleration * delta;
 
