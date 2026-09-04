@@ -20,7 +20,7 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
-// --- Sol & Skybox (Exercice 1) ---
+// --- Sol & Skybox (exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load('textures/skybox.jpg', (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -40,7 +40,7 @@ const ground = new THREE.Mesh(
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-// --- Joueur ---
+// --- Joueur (exercice 2) ---
 const cubeSize = 2;
 const playerGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.4 });
