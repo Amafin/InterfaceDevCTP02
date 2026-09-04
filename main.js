@@ -26,8 +26,13 @@ scene.add(dirLight);
 
 // --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
+
+// Résolution absolue et dynamique des URLs par le navigateur
+const skyboxUrl = new URL('./textures/skybox.png', import.meta.url).href;
+const grassUrl = new URL('./textures/grass.png', import.meta.url).href;
+
 textureLoader.load(
-  './textures/skybox.png',
+  skyboxUrl,
   (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -39,7 +44,7 @@ textureLoader.load(
 );
 
 const grassTexture = textureLoader.load(
-  './textures/grass.png',
+  grassUrl,
   (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
   },
