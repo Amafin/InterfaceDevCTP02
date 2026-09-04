@@ -21,7 +21,7 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
-/*
+
 // --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load(
@@ -43,47 +43,6 @@ const grassTexture = textureLoader.load(
   },
   undefined,
   (err) => console.error('Erreur chargement grass.png :', err)
-);
-grassTexture.wrapS = THREE.RepeatWrapping;
-grassTexture.wrapT = THREE.RepeatWrapping;
-grassTexture.repeat.set(20, 20);
-
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(100, 100),
-  new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.8 })
-);
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
-*/
-
-// --- Sol & Skybox (Exercice 1) ---
-const textureLoader = new THREE.TextureLoader();
-
-// Test avec une skybox en ligne (panoramique)
-textureLoader.load(
-  'https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr', // ou jpg équivalent
-  (texture) => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.background = texture;
-    scene.environment = texture;
-  },
-  undefined,
-  () => {
-    // Fallback image panoramique standard si HDR non supporté directement
-    textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/2294472375_24a3b8ef46_o.jpg', (tex) => {
-      tex.mapping = THREE.EquirectangularReflectionMapping;
-      scene.background = tex;
-      scene.environment = tex;
-    });
-  }
-);
-
-// Test avec une texture d'herbe en ligne
-const grassTexture = textureLoader.load(
-  'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/terrain/grasslight-big.jpg',
-  (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-  }
 );
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
@@ -205,6 +164,8 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
 }
+
+
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
