@@ -1,67 +1,158 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// 1. Initialisation de la scène, caméra et rendu
+// --- Scène, Caméra & Rendu ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 5, 15);
+camera.position.set(0, 10, 20);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// Contrôles pour explorer la scène à la souris
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-// Gestion des lumières
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-scene.add(ambientLight);
-
+// Lumières
+scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
+// --- Sol & Skybox (Exercice 1) ---
 const textureLoader = new THREE.TextureLoader();
-
-// 2. Skybox (Image panoramique équirectangulaire)
-textureLoader.load('textures/skybox.png', (texture) => {
+textureLoader.load('textures/skybox.jpg', (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = texture;
-  scene.environment = texture; // Éclaire la scène avec les teintes du ciel
+  scene.environment = texture;
 });
 
-// 3. Plan horizontal texturé (Sol en herbe)
-const grassTexture = textureLoader.load('textures/grass.png');
-// Répétition de la texture pour éviter qu'elle soit trop étirée
+const grassTexture = textureLoader.load('textures/grass.jpg');
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 grassTexture.repeat.set(20, 20);
 
-// Grand plan (ex: 100x100 unités)
-const planeGeometry = new THREE.PlaneGeometry(100, 100);
-const planeMaterial = new THREE.MeshStandardMaterial({ 
-  map: grassTexture,
-  roughness: 0.8 
-});
-
-const ground = new THREE.Mesh(planeGeometry, planeMaterial);
-// Rotation obligatoire : PlaneGeometry est vertical par défaut (plan XY)
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(100, 100),
+  new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.8 })
+);
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-// 4. Redimensionnement dynamique de la fenêtre
+// --- Joueur ---
+const cubeSize = 2;
+const playerGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.4 });
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+
+// Base qui repose sur le sol
+const groundY = cubeSize / 2;
+player.position.set(0, groundY, 0);
+scene.add(player);
+
+// --- Gestion des Entrées Clavier ---
+const keys = {
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+  space: false
+};
+
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (key === 'w' || key === 'z') keys.w = true; // Support ZQSD / WASD
+  if (key === 'a' || key === 'q') keys.a = true;
+  if (key === 's') keys.s = true;
+  if (key === 'd') keys.d = true;
+  if (e.code === 'Space') keys.space = true;
+});
+
+window.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase();
+  if (key === 'w' || key === 'z') keys.w = false;
+  if (key === 'a' || key === 'q') keys.a = false;
+  if (key === 's') keys.s = false;
+  if (key === 'd') keys.d = false;
+  if (e.code === 'Space') keys.space = false;
+});
+
+// --- Paramètres Physiques & Déplacement ---
+const velocity = new THREE.Vector3(0, 0, 0);
+const acceleration = 40.0; // Vitesse de montée en régime
+const friction = 5.0;      // Décélération au relâchement
+const maxSpeed = 12.0;     // Vitesse horizontale max
+const gravity = -30.0;     // Force de gravité
+const jumpStrength = 12.0; // Impulsion de saut
+let isGrounded = true;
+
+const clock = new THREE.Clock();
+
+// --- Boucle d'Animation ---
+function animate() {
+  requestAnimationFrame(animate);
+
+  const delta = clock.getDelta();
+
+  // Direction voulue par l'utilisateur
+  const inputDirection = new THREE.Vector3();
+  if (keys.w) inputDirection.z -= 1; // Avancer (vers -Z)
+  if (keys.s) inputDirection.z += 1; // Reculer (vers +Z)
+  if (keys.a) inputDirection.x -= 1; // Gauche (-X)
+  if (keys.d) inputDirection.x += 1; // Droite (+X)
+
+  if (inputDirection.lengthSq() > 0) {
+    inputDirection.normalize();
+  }
+
+  if (inputDirection.lengthSq() > 0) {
+    velocity.x += inputDirection.x * acceleration * delta;
+    velocity.z += inputDirection.z * acceleration * delta;
+
+    const currentSpeed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+    if (currentSpeed > maxSpeed) {
+      velocity.x = (velocity.x / currentSpeed) * maxSpeed;
+      velocity.z = (velocity.z / currentSpeed) * maxSpeed;
+    }
+  } else {
+    const damp = Math.exp(-friction * delta);
+    velocity.x *= damp;
+    velocity.z *= damp;
+
+    if (Math.abs(velocity.x) < 0.01) velocity.x = 0;
+    if (Math.abs(velocity.z) < 0.01) velocity.z = 0;
+  }
+
+  // Saut autorisé uniquement si le cube touche le sol
+  if (keys.space && isGrounded) {
+    velocity.y = jumpStrength;
+    isGrounded = false;
+  }
+
+  // Gravité
+  velocity.y += gravity * delta;
+
+  // Mise à jour de la position du cube
+  player.position.x += velocity.x * delta;
+  player.position.y += velocity.y * delta;
+  player.position.z += velocity.z * delta;
+
+  // Collision avec le sol
+  if (player.position.y <= groundY) {
+    player.position.y = groundY;
+    velocity.y = 0;
+    isGrounded = true;
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// 5. Boucle d'animation
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
 animate();
