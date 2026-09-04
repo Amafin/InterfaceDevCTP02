@@ -12,7 +12,17 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableDamping = true; // Fluidité / inertie
+controls.dampingFactor = 0.05;
+
+// Configuration des limites de la caméra orbitale (Exercice 3)
+controls.enablePan = false; // Empêche de décentrer la caméra du cube
+controls.minDistance = 5;   // Zoom avant maximal
+controls.maxDistance = 35;  // Zoom arrière maximal
+
+// Limites verticales :
+controls.minPolarAngle = 0.1; // Limite haute : empêche d'aller pile au-dessus
+controls.maxPolarAngle = Math.PI / 2 - 0.05; // Limite basse : empêche de passer sous le sol
 
 // Lumières
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -21,19 +31,16 @@ dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
 // --- Sol & Skybox (Exercice 1) ---
-
-// 1. Skybox panoramique équirectangulaire généré par Canvas
 const skyCanvas = document.createElement('canvas');
 skyCanvas.width = 1024;
 skyCanvas.height = 512;
 const skyCtx = skyCanvas.getContext('2d');
 
-// Dégradé vertical pour simuler le ciel et l'horizon
 const skyGradient = skyCtx.createLinearGradient(0, 0, 0, 512);
-skyGradient.addColorStop(0.0, '#1e528e'); // Zénith bleu profond
-skyGradient.addColorStop(0.5, '#7ca9d6'); // Ciel dégagé
-skyGradient.addColorStop(0.7, '#dceaf7'); // Horizon lumineux
-skyGradient.addColorStop(1.0, '#4a6042'); // Terre / horizon lointain
+skyGradient.addColorStop(0.0, '#1e528e');
+skyGradient.addColorStop(0.5, '#7ca9d6');
+skyGradient.addColorStop(0.7, '#dceaf7');
+skyGradient.addColorStop(1.0, '#4a6042');
 skyCtx.fillStyle = skyGradient;
 skyCtx.fillRect(0, 0, 1024, 512);
 
@@ -43,17 +50,14 @@ skyTexture.mapping = THREE.EquirectangularReflectionMapping;
 scene.background = skyTexture;
 scene.environment = skyTexture;
 
-// 2. Texture d'herbe procédurale avec motif et variations
 const grassCanvas = document.createElement('canvas');
 grassCanvas.width = 256;
 grassCanvas.height = 256;
 const grassCtx = grassCanvas.getContext('2d');
 
-// Fond vert herbe
 grassCtx.fillStyle = '#3a7d32';
 grassCtx.fillRect(0, 0, 256, 256);
 
-// Taches d'herbe variées (teintes claires et sombres)
 for (let i = 0; i < 2000; i++) {
   const x = Math.random() * 256;
   const y = Math.random() * 256;
@@ -68,7 +72,6 @@ grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 grassTexture.repeat.set(20, 20);
 
-// Grand plan horizontal pour le sol
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(100, 100),
   new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.8 })
@@ -82,7 +85,6 @@ const playerGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.4 });
 const player = new THREE.Mesh(playerGeometry, playerMaterial);
 
-// Base qui repose sur le sol
 const groundY = cubeSize / 2;
 player.position.set(0, groundY, 0);
 scene.add(player);
@@ -130,6 +132,9 @@ function animate() {
   requestAnimationFrame(animate);
 
   const delta = clock.getDelta();
+
+  // Mémorisation de la position précédente pour déplacer la caméra d'autant
+  const previousPlayerPos = player.position.clone();
 
   // Direction voulue par l'utilisateur
   const inputDirection = new THREE.Vector3();
@@ -180,6 +185,16 @@ function animate() {
     velocity.y = 0;
     isGrounded = true;
   }
+
+  // --- Suivi automatique de la caméra (Exercice 3) ---
+  // Calcul du vecteur de déplacement subi par le joueur sur cette frame
+  const playerMovement = player.position.clone().sub(previousPlayerPos);
+  
+  // Translation de la caméra pour maintenir la distance exacte
+  camera.position.add(playerMovement);
+  
+  // Recentre la cible d'orbite sur le centre du cube
+  controls.target.copy(player.position);
 
   controls.update();
   renderer.render(scene, camera);
