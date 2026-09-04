@@ -1,15 +1,27 @@
-// --- Composant 1 : Déplacement physique et stabilité absolue du cube ---
+// --- Suivi de position pour la caméra (évite tout conflit clavier) ---
+AFRAME.registerComponent('camera-rig-follow', {
+  schema: {
+    target: { type: 'selector' }
+  },
+  tick: function () {
+    if (!this.data.target) return;
+    const targetPos = this.data.target.object3D.position;
+    // Le rig se place exactement aux coordonnées du cube
+    this.el.object3D.position.set(targetPos.x, targetPos.y, targetPos.z);
+  }
+});
+
+// --- Déplacement physique du cube ---
 AFRAME.registerComponent('player-physics-movement', {
   schema: {
     speed: { type: 'number', default: 8 },
-    jumpForce: { type: 'number', default: 7 }
+    jumpForce: { type: 'number', default: 8 }
   },
 
   init: function () {
     this.keys = {};
     this.isGrounded = false;
 
-    // Écouteurs clavier (ZQSD / WASD + Espace)
     window.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
       if (key === 'w' || key === 'z') this.keys.forward = true;
@@ -29,20 +41,22 @@ AFRAME.registerComponent('player-physics-movement', {
       if (key === 'd') this.keys.right = false;
     });
 
-    // Détection d'atterrissage sur le sol
+    // Contact sol
     this.el.addEventListener('collide', (e) => {
       const contact = e.detail.contact;
       if (contact) {
-        this.isGrounded = true;
+        const normal = contact.ni;
+        if (Math.abs(normal.y) > 0.5) {
+          this.isGrounded = true;
+        }
       }
     });
 
-    // Verrouillage STRICT des rotations physiques lors des chocs
+    // Stabilité physique
     this.el.addEventListener('body-loaded', () => {
       const body = this.el.body;
       if (!body) return;
 
-      // 1. Bloque toute rotation sur tous les axes (X, Y, Z)
       body.fixedRotation = true;
       body.updateMassProperties();
 
@@ -50,6 +64,7 @@ AFRAME.registerComponent('player-physics-movement', {
         body.angularFactor.set(0, 0, 0);
       }
       body.angularDamping = 1.0;
+      body.material.friction = 0.0;
     });
   },
 
@@ -64,7 +79,6 @@ AFRAME.registerComponent('player-physics-movement', {
     const body = this.el.body;
     if (!body) return;
 
-    // Déplacement WASD / ZQSD
     let moveX = 0;
     let moveZ = 0;
 
@@ -73,7 +87,6 @@ AFRAME.registerComponent('player-physics-movement', {
     if (this.keys.left) moveX -= 1;
     if (this.keys.right) moveX += 1;
 
-    // Normalisation de la vitesse
     const len = Math.hypot(moveX, moveZ);
     if (len > 0) {
       moveX = (moveX / len) * this.data.speed;
@@ -83,35 +96,8 @@ AFRAME.registerComponent('player-physics-movement', {
     body.velocity.x = moveX;
     body.velocity.z = moveZ;
 
-    // Annule toute vitesse angulaire parasite lors d'un choc
+    // Verrouillage rigide du cube
     body.angularVelocity.set(0, 0, 0);
-
-    // Maintient le cube parfaitement orienté sans aucune rotation
     body.quaternion.set(0, 0, 0, 1);
-  }
-});
-
-// --- Composant 2 : Suivi caméra rigide (maintient distance et hauteur constantes) ---
-AFRAME.registerComponent('camera-follow', {
-  schema: {
-    target: { type: 'selector' },
-    offsetX: { type: 'number', default: 0 },
-    offsetY: { type: 'number', default: 6 },
-    offsetZ: { type: 'number', default: 12 }
-  },
-
-  tick: function () {
-    if (!this.data.target) return;
-
-    // Récupération de la position du cube
-    const targetPos = this.data.target.object3D.position;
-
-    // La caméra se place exactement à la même distance horizontale
-    // et garde sa hauteur fixe (sans s'abaisser ni monter)
-    this.el.object3D.position.set(
-      targetPos.x + this.data.offsetX,
-      this.data.offsetY,
-      targetPos.z + this.data.offsetZ
-    );
   }
 });
